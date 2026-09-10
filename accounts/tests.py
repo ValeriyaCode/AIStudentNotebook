@@ -46,7 +46,7 @@ class GroupTests(TestCase):
         student = group.students.first()
         pages = list(group.template.pages.all())
         self.client.force_login(student)
-        self.assertContains(self.client.get(reverse('dashboard')), 'aria-disabled="true"', count=10)
+        self.assertContains(self.client.get(reverse('dashboard')), 'aria-disabled="true"', count=11)
         locked = reverse('page_detail', args=[pages[1].pk])
         self.assertEqual(self.client.get(locked).status_code, 403)
         self.assertEqual(self.client.post(locked, {}).status_code, 403)

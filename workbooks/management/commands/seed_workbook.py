@@ -6,7 +6,7 @@ from workbooks.models import WorkbookBlock, WorkbookPage, WorkbookTemplate
 
 
 class Command(BaseCommand):
-    help = 'Створює та активує AI-зошит із 11 розділів, зберігаючи попередні тетради.'
+    help = 'Створює та активує AI-зошит із 12 розділів, зберігаючи попередні тетради.'
 
     @transaction.atomic
     def handle(self, *args, **options):

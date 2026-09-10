@@ -101,7 +101,7 @@ class WorkbookTests(TestCase):
     def test_course_structure_and_repeat_seed_preserves_answers(self):
         from workbooks.course_content import PAGES
         self.assertEqual(list(self.template.pages.values_list('title', flat=True)), [p[0] for p in PAGES])
-        self.assertEqual(self.template.pages.count(), 11)
+        self.assertEqual(self.template.pages.count(), 12)
         workbook = StudentWorkbook.objects.create(student=self.user, template=self.template)
         block = self.template.pages.first().blocks.filter(block_type='text').first()
         answer = StudentAnswer.objects.create(workbook=workbook, block=block, value='Збережена відповідь')
