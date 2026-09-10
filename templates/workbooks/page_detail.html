@@ -1,9 +1,10 @@
 {% extends 'base.html' %}
 {% load workbook_extras static %}
 {% block title %}{{ page.title }}{% endblock %}
-{% block body_class %}assignment-page{% endblock %}
+{% block body_class %}assignment-page {% if page.position|divisibleby:2 %}art-right{% else %}art-left{% endif %}{% endblock %}
+{% block decoration %}{% include 'includes/plants.html' %}<div class="assignment-art-layer" aria-hidden="true"><img class="assignment-art scene-art" src="{% static assignment_art %}" alt=""></div>{% endblock %}
 {% block content %}
-<img class="assignment-art scene-art" src="{% static assignment_art %}" alt="" aria-hidden="true">
+
 <a class="back" href="{% url 'dashboard' %}">← До змісту</a>
 <section class="page-heading">
     <div class="eyebrow">Сторінка {{ page.position|add:1 }}</div>
