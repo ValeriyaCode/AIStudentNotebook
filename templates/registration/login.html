@@ -5,6 +5,6 @@
     <div class="eyebrow">Твоя особиста навчальна тетрадь</div>
     <h1>Увійти</h1>
     <form method="post" class="stack">{% csrf_token %}{{ form.as_p }}<button class="button primary">Увійти</button></form>
-    <p class="muted">Ще немає акаунта? <a href="{% url 'register' %}">Зареєструватися</a></p>
+    <p class="muted">Учням логін і пароль надає викладач.</p>
 </div>
 {% endblock %}

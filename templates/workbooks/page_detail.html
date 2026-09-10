@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load workbook_extras %}
+{% load workbook_extras static %}
 {% block title %}{{ page.title }}{% endblock %}
 {% block content %}
 <a class="back" href="{% url 'dashboard' %}">← До змісту</a>
@@ -8,9 +8,25 @@
     <h1>{{ page.title }}</h1>
     <p>{{ page.subtitle }}</p>
 </section>
-<form method="post" class="notebook-form">{% csrf_token %}
+<form method="post" enctype="multipart/form-data" class="notebook-form">{% csrf_token %}
+    {% if read_only %}<p class="message">Група в архіві. Зошит доступний лише для перегляду.</p>{% endif %}
+    {% if page_form.errors %}<div class="message error" role="alert"><strong>Перевірте відповіді:</strong>{{ page_form.non_field_errors }}{% for field in page_form %}{% if field.errors %}<p>{{ field.label }}: {{ field.errors|striptags }}</p>{% endif %}{% endfor %}</div>{% endif %}
+    <fieldset class="workbook-fields" {% if read_only %}disabled{% endif %}>
     {% for block in blocks %}
-    <section class="field-card">
+    {% if not block.continuation %}<section class="field-card{% if block.tool_card %} tool-card{% endif %}{% if block.profile_card %} profile-card{% endif %}">{% endif %}
+    {% if block.profile_card %}
+    <div class="avatar-editor">
+        <div class="avatar-circle">
+            <img class="avatar-preview" {% if user.avatar %}src="{{ user.avatar.url }}"{% else %}hidden{% endif %} alt="Моя аватарка">
+            <svg class="avatar-placeholder" {% if user.avatar %}hidden{% endif %} viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="35" r="17" fill="currentColor"/><path d="M18 88c0-24 14-35 32-35s32 11 32 35" fill="currentColor"/></svg>
+        </div>
+        <label class="avatar-add" for="avatar-upload" aria-label="Змінити аватарку">+</label>
+        <input id="avatar-upload" class="avatar-input" type="file" name="avatar" accept="image/jpeg,image/png,image/webp">
+        <span class="avatar-hint">Обрати фото</span>
+        <span class="avatar-status" role="status"></span>
+    </div>
+    {% endif %}
+    <div class="field-content{% if block.half_width %} profile-field{% endif %}{% if block.continuation %} field-continuation{% endif %}">
         {% if block.block_type == 'static_text' %}
             <div class="static-text">{{ block.label }}</div>
         {% elif block.block_type == 'text' %}
@@ -35,19 +51,34 @@
             <label>{{ block.label }}</label>
             <div class="rating">
                 {% for i in block.rating_values %}
-                    <label><input type="radio" name="block_{{ block.id }}" value="{{ i }}" {% if block.current_value|stringformat:'s' == i %}checked{% endif %}><span>★</span></label>
+                    <label><input type="radio" name="block_{{ block.id }}" value="{{ i }}" aria-label="{{ i }}" {% if block.current_value|stringformat:'s' == i %}checked{% endif %}><span aria-hidden="true">★</span></label>
                 {% endfor %}
             </div>
         {% elif block.block_type == 'table' %}
             <label>{{ block.label }}</label>
-            <div class="table-wrap"><table class="input-table"><thead><tr><th></th>{% for col in block.table_columns %}<th>{{ col }}</th>{% endfor %}</tr></thead><tbody>{% for row in block.table_rows %}<tr><th>{{ row.label }}</th>{% for cell in row.cells %}<td><textarea name="{{ cell.name }}" rows="2">{{ cell.value }}</textarea></td>{% endfor %}</tr>{% endfor %}</tbody></table></div>
+            <div class="editable-table" data-block-id="{{ block.id }}">
+                <input type="hidden" name="block_{{ block.id }}_rows_present" value="1">
+                <div class="table-with-actions"><div class="table-wrap"><table class="input-table">
+                    <thead><tr><th>№</th>{% for col in block.table_columns %}<th>{{ col }}</th>{% endfor %}</tr></thead>
+                    <tbody>{% for row in block.table_rows %}<tr>
+                        <th><span class="row-number">{{ row.label }}</span><input type="hidden" name="block_{{ block.id }}_row" value="{{ row.label }}"></th>
+                        {% for cell in row.cells %}<td><textarea name="{{ cell.name }}" rows="2">{{ cell.value }}</textarea></td>{% endfor %}
+                    </tr>{% endfor %}</tbody>
+                </table></div><div class="row-actions" aria-label="Видалення рядків"></div></div>
+                <template><tr><th><span class="row-number"></span><input type="hidden" name="block_{{ block.id }}_row"></th>{% for col in block.table_columns %}<td><textarea rows="2"></textarea></td>{% endfor %}</tr></template>
+                <button type="button" class="button ghost add-row">+ Додати рядок</button>
+            </div>
         {% endif %}
-    </section>
+    </div>
+    {% if block.ends_card %}</section>{% endif %}
     {% endfor %}
+    </fieldset>
     <div class="form-actions">
         {% if prev_page %}<a class="button ghost" href="{% url 'page_detail' prev_page.id %}">← Назад</a>{% endif %}
-        <button class="button secondary" type="submit" name="save">Зберегти</button>
-        {% if next_page %}<button class="button primary" type="submit" name="save_next">Зберегти й далі →</button>{% endif %}
+        {% if not read_only %}<button class="button secondary" type="submit" name="save">Зберегти</button>{% endif %}
+        {% if next_page and read_only %}<a class="button primary" href="{% url 'page_detail' next_page.id %}">Далі →</a>{% endif %}
+        {% if next_page and not read_only %}<button class="button primary" type="submit" name="save_next">Зберегти й далі →</button>{% endif %}
     </div>
 </form>
+<script src="{% static 'js/app.js' %}?v=reliable-saving" defer></script>
 {% endblock %}

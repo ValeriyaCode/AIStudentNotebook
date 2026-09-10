@@ -1,0 +1,3 @@
+{% extends 'base.html' %}
+{% block content %}<a class="back" href="{% url 'admin_dashboard' %}">← До груп</a><h1>Створити групу</h1>
+<form method="post" class="management-form field-card">{% csrf_token %}{{ form.as_p }}<input type="hidden" name="submission_token" value="{{ submission_token }}">{{ names_form.as_p }}<p class="muted">Для кожного учня створимо логін і пароль. Спочатку буде відкритий перший розділ.</p><button class="button primary">Створити групу та акаунти</button></form>{% endblock %}

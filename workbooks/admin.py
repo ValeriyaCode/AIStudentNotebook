@@ -5,7 +5,7 @@ from .models import StudentAnswer, StudentWorkbook, WorkbookBlock, WorkbookPage,
 class WorkbookBlockInline(admin.StackedInline):
     model = WorkbookBlock
     extra = 0
-    fields = ('position', 'block_type', 'label', 'help_text', 'required', 'config')
+    fields = ('position', 'block_type', 'label', 'help_text', 'required', 'config', 'card_key', 'card_style', 'half_width')
     ordering = ('position',)
 
 

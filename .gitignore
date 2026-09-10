@@ -10,3 +10,12 @@ staticfiles/
 .DS_Store
 server.stdout.log
 server.stderr.log
+tmp/
+
+media/
+
+.credential-key
+
+backups/
+restore-check/
+.local-secret

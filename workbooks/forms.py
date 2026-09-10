@@ -1,5 +1,5 @@
 from django import forms
-from .models import StudentAnswer, WorkbookBlock
+from .models import WorkbookBlock
 
 
 def build_block_field(block: WorkbookBlock, current=None):
@@ -11,10 +11,10 @@ def build_block_field(block: WorkbookBlock, current=None):
     }
 
     if block.block_type == WorkbookBlock.Type.TEXT:
-        return forms.CharField(**common, initial=current or '', widget=forms.TextInput(attrs={'placeholder': config.get('placeholder', '')}))
+        return forms.CharField(**common, max_length=20000, initial=current or '', widget=forms.TextInput(attrs={'placeholder': config.get('placeholder', '')}))
 
     if block.block_type == WorkbookBlock.Type.TEXTAREA:
-        return forms.CharField(**common, initial=current or '', widget=forms.Textarea(attrs={'rows': config.get('rows', 5), 'placeholder': config.get('placeholder', '')}))
+        return forms.CharField(**common, max_length=20000, initial=current or '', widget=forms.Textarea(attrs={'rows': config.get('rows', 5), 'placeholder': config.get('placeholder', '')}))
 
     if block.block_type == WorkbookBlock.Type.CHECKBOXES:
         choices = [(item, item) for item in config.get('options', [])]
@@ -42,6 +42,8 @@ def extract_answer_value(block: WorkbookBlock, post_data):
         return post_data.getlist(key)
     if block.block_type == WorkbookBlock.Type.TABLE:
         rows = (block.config or {}).get('rows', [])
+        if f'{key}_rows_present' in post_data:
+            rows = post_data.getlist(f'{key}_row')
         columns = (block.config or {}).get('columns', [])
         table = []
         for r_idx, row_label in enumerate(rows):
@@ -51,3 +53,31 @@ def extract_answer_value(block: WorkbookBlock, post_data):
             table.append(row)
         return table
     return post_data.get(key, '').strip()
+
+
+class WorkbookPageForm(forms.Form):
+    def __init__(self, blocks, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.blocks = blocks
+        for block in blocks:
+            field = build_block_field(block)
+            if field is not None:
+                self.fields[f'block_{block.pk}'] = field
+
+    def clean(self):
+        cleaned = super().clean()
+        for block in self.blocks:
+            if block.block_type != WorkbookBlock.Type.TABLE:
+                continue
+            key = f'block_{block.pk}'
+            rows = self.data.getlist(f'{key}_row') if f'{key}_rows_present' in self.data else (block.config or {}).get('rows', [])
+            if len(rows) > 100:
+                self.add_error(None, f'{block.label}: максимум 100 рядків.')
+                continue
+            value = extract_answer_value(block, self.data)
+            if any(len(str(cell)) > 20000 for row in value for cell in row.values()):
+                self.add_error(None, f'{block.label}: текст у клітинці завеликий.')
+            if block.required and not any(cell for row in value for name, cell in row.items() if name != '_row'):
+                self.add_error(None, f'{block.label}: заповніть таблицю.')
+            cleaned[key] = value
+        return cleaned

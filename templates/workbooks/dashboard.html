@@ -8,16 +8,16 @@
         <h1>{{ workbook.template.title }}</h1>
         <p>{{ workbook.template.description }}</p>
     </div>
-    <div class="progress-card"><strong>{{ workbook.completion }}%</strong><span>заповнено</span></div>
+    <div class="progress-card"><strong>{{ available_progress }}%</strong><span>доступних розділів</span><small>Весь курс: {{ workbook.completion }}%</small></div>
 </section>
-<div class="progress-track"><span style="width: {{ workbook.completion }}%"></span></div>
+<div class="progress-track"><span style="width: {{ available_progress }}%"></span></div>
 <div class="page-grid">
     {% for page in pages %}
-    <a class="page-card" href="{% url 'page_detail' page.id %}">
+    {% if page.is_open %}<a class="page-card" href="{% url 'page_detail' page.id %}">{% else %}<div class="page-card locked" aria-disabled="true">{% endif %}
         <span class="page-number">{{ forloop.counter }}</span>
         <div><h2>{{ page.title }}</h2><p>{{ page.subtitle }}</p></div>
-        <span class="arrow">→</span>
-    </a>
+        <span class="arrow">{% if page.is_open %}→{% else %}🔒{% endif %}</span>
+    {% if page.is_open %}</a>{% else %}</div>{% endif %}
     {% endfor %}
 </div>
 <a class="button secondary" href="{% url 'export_pdf' %}">Зберегти тетрадь у PDF</a>

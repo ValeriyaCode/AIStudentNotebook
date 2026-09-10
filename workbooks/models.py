@@ -46,6 +46,9 @@ class WorkbookBlock(models.Model):
     required = models.BooleanField(default=False)
     position = models.PositiveIntegerField(default=0)
     config = models.JSONField(default=dict, blank=True)
+    card_key = models.CharField(max_length=80, blank=True)
+    card_style = models.CharField(max_length=20, choices=[('', 'Звичайна'), ('profile', 'Про мене'), ('tool', 'Інструменти')], blank=True)
+    half_width = models.BooleanField(default=False)
 
     class Meta:
         ordering = ['position', 'id']
@@ -68,8 +71,11 @@ class StudentWorkbook(models.Model):
     def __str__(self):
         return f'{self.student.get_full_name() or self.student.username} — {self.template.title}'
 
-    def completion(self):
-        blocks = list(WorkbookBlock.objects.filter(page__template=self.template).exclude(block_type=WorkbookBlock.Type.STATIC_TEXT))
+    def completion(self, pages=None):
+        queryset = WorkbookBlock.objects.filter(page__template=self.template).exclude(block_type=WorkbookBlock.Type.STATIC_TEXT)
+        if pages is not None:
+            queryset = queryset.filter(page__in=pages)
+        blocks = list(queryset)
         if not blocks:
             return 0
         values = self.answers.filter(block__in=blocks).values_list('value', flat=True)

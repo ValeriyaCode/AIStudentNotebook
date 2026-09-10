@@ -1,105 +1,76 @@
-# AI Student Workbook
+# AI Student Notebook
 
-Веб-тетрадь для учнів: дитина реєструється, заповнює динамічні сторінки, відповіді зберігаються в БД, адміністратор переглядає тетради та редагує структуру шаблону.
+Django-зошит із 11 розділами українською. Викладач створює групи та учнів, видає згенеровані логіни й паролі, відкриває розділи та переглядає відповіді. Учням не потрібна реєстрація.
 
-## Уже реалізовано
+## Запуск у терміналі PyCharm (Windows)
 
-- реєстрація та авторизація учнів;
-- окремий доступ адміністратора;
-- динамічна модель `Шаблон → Сторінки → Елементи`;
-- типи елементів: короткий текст, велике поле, чекліст, список, рейтинг, таблиця, статичний текст;
-- збереження відповідей кожного учня в БД;
-- сторінка адміністратора зі списком тетрадей;
-- редагування шаблону через Django Admin;
-- експорт особистої тетради у PDF через WeasyPrint;
-- стартовий seed на 8 розділів тетради.
-
-## Стек
-
-- Python 3.12+
-- Django 5
-- SQLite для MVP (потім PostgreSQL без зміни моделей)
-- Django templates + CSS
-- WeasyPrint для PDF
-
-## Запуск
-
-```bash
-python -m venv .venv
-# Windows: .venv\Scripts\activate
-# macOS/Linux: source .venv/bin/activate
-pip install -r requirements.txt
-python manage.py migrate
-python manage.py seed_workbook
-python manage.py createsuperuser
-python manage.py runserver
-```
-
-Міграції вже включені в проєкт. Для перевірки: `python manage.py check` та
-`python manage.py test`.
-
-### Windows: повторний локальний запуск
+Відкрийте термінал у папці проєкту. Перший запуск:
 
 ```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe manage.py migrate
+.\.venv\Scripts\python.exe manage.py seed_workbook
+.\.venv\Scripts\python.exe manage.py createsuperuser
 .\.venv\Scripts\python.exe manage.py runserver 127.0.0.1:8000
 ```
 
-Налаштування читаються зі змінних середовища; файл `.env.example` є прикладом,
-а `.env` автоматично не завантажується.
+Відкрийте http://127.0.0.1:8000/. Для наступних запусків достатньо останньої команди. Зупинити сервер: Ctrl+C. Активація середовища не потрібна, якщо використовувати повний шлях до Python.
 
-### PDF у Windows
+## Оновлення з GitHub
 
-Окрім Python-пакетів, WeasyPrint потребує системних бібліотек Pango/GObject.
-Якщо вони відсутні, сайт працює, а експорт показує повідомлення про недоступність.
-Встановіть MSYS2 та виконайте в його UCRT64 shell:
-
-```bash
-pacman -S mingw-w64-ucrt-x86_64-pango
-```
-
-Перед запуском Django в PowerShell задайте шлях і перевірте генерацію PDF:
+Зупиніть сервер і виконайте:
 
 ```powershell
-$env:WEASYPRINT_DLL_DIRECTORIES = 'C:\msys64\ucrt64\bin'
-.\.venv\Scripts\python.exe -c "from weasyprint import HTML; print(len(HTML(string='<p>Test</p>').write_pdf()))"
+.\.venv\Scripts\python.exe manage.py backup_project
+ git pull --ff-only origin main
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe manage.py migrate
+.\.venv\Scripts\python.exe manage.py runserver 127.0.0.1:8000
 ```
 
-Докладніше: [офіційна інструкція WeasyPrint](https://doc.courtbouillon.org/weasyprint/stable/first_steps.html#windows).
+Якщо Git повідомляє про локальні зміни, збережіть їх комітом перед оновленням. Seed повторно для звичайного оновлення не потрібен: він встановлює структуру курсу. Оновіть браузер Ctrl+F5.
 
-Відкрити:
+## Можливості
 
-- `http://127.0.0.1:8000/` — учнівська частина;
-- `http://127.0.0.1:8000/admin-panel/` — зручний список тетрадей;
-- `http://127.0.0.1:8000/django-admin/` — конструктор шаблону.
+- Групи з датою початку, пошуком, архівом і підтвердженням видалення.
+- Додавання учнів списком, редагування імен, переведення між групами, перемикач активності та видалення.
+- Логіни й паролі окремою кнопкою у групі; новий пароль із підтвердженням у рядку учня на цій сторінці.
+- Викладач бачить власні групи; суперкористувач — усі групи та учнів без групи.
+- Закриті розділи недоступні за прямим посиланням. Архівний зошит доступний лише для читання.
+- Таблиці до 100 рядків, рейтинг, аватарка до 5 МБ, перевірка відповідей перед збереженням.
+- Попередження про незбережені зміни; захист від повторного надсилання форм. Збереження ручне, кнопкою «Зберегти».
+- Прогрес доступних розділів і всього зошита окремо. Відповіді розгортаються по розділах.
+- PDF із збереженими відповідями та українськими шрифтами; кнопка також унизу перегляду викладача.
 
-## Як працює конструктор
+## Резервні копії
 
-`WorkbookBlock.config` зберігає налаштування конкретного типу елемента у JSON.
-
-Приклади:
-
-```json
-{"options": ["Варіант 1", "Варіант 2"]}
+```powershell
+.\.venv\Scripts\python.exe manage.py backup_project
+.\.venv\Scripts\python.exe manage.py restore_backup backups/ІМЯ-КОПІЇ.zip --destination restore-check/new-copy
 ```
 
-для чекліста / select;
+Копія включає знімок SQLite, фото та ключ розшифрування виданих паролів. Відновлення перевіряє контрольні суми й цілісність БД та записує файли лише в нову папку. Для заміни робочих даних зупиніть сервер, зробіть окрему копію поточного стану й перенесіть перевірені db.sqlite3, media/ та .credential-key на відповідні місця. Якщо ключ задається змінною середовища, відновіть також її значення з копії.
 
-```json
-{"max": 5}
+Зберігайте архіви приватно та копіюйте на окремий носій. Команда запускається вручну, автоматичного розкладу немає. Для PostgreSQL використовуйте pg_dump і окремо копіюйте медіафайли та ключ.
+
+Пошук невикористаних аватарок: `python manage.py cleanup_avatars`. Видалення: та сама команда з `--delete`, після резервної копії.
+
+## Налаштування й публічний сервер
+
+Python 3.12, Django 5. Налаштування читаються зі змінних середовища; .env автоматично не завантажується. Локальні секрети генеруються у .local-secret і .credential-key. Секрети, БД, фото та резервні копії виключені з Git і Docker-образу.
+
+Для production потрібні DJANGO_DEBUG=0, випадковий DJANGO_SECRET_KEY довжиною щонайменше 50 символів, постійний CREDENTIAL_ENCRYPTION_KEY формату Fernet, DJANGO_ALLOWED_HOSTS та DJANGO_CSRF_TRUSTED_ORIGINS з HTTPS-доменом. Для наявних даних використовуйте ключ із .credential-key: його заміна унеможливить перегляд старих виданих паролів. Вхід перевіряється за окремим хешем Django.
+
+Docker запускає Gunicorn від непривілейованого користувача. Підключіть постійний том до /data (SQLite і фото), передайте секрети через захищене оточення. До запуску виконайте міграції; для порожньої БД — seed і createsuperuser. WhiteNoise обслуговує статику, фото доступні авторизованому власнику або його викладачу. HTTPS завершується на reverse proxy. DJANGO_TRUST_PROXY=1 вмикайте лише за довіреним проксі, який очищує вхідний X-Forwarded-Proto.
+
+## Перевірки
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
+.\.venv\Scripts\python.exe manage.py check
+.\.venv\Scripts\python.exe manage.py makemigrations --check --dry-run
+.\.venv\Scripts\python.exe manage.py test
 ```
 
-для рейтингу;
-
-```json
-{"columns": ["Тема", "Що зрозумів"], "rows": ["Урок 1", "Урок 2"]}
-```
-
-для таблиці.
-
-## Наступний технічний етап
-
-1. drag-and-drop конструктор замість JSON у Django Admin;
-2. автоматичне збереження полів без кнопки;
-3. кілька шаблонів тетрадей / курси / групи;
-4. PostgreSQL + деплой;
-5. красивіший PDF із брендингом.
+Структура карток задається card_key, card_style, half_width і не залежить від заголовків. Технічний конструктор доступний суперкористувачу через налаштування викладача. PDF використовує ReportLab і включений DejaVu Sans; ліцензія у workbooks/fonts/.

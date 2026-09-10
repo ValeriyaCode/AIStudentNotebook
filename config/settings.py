@@ -4,8 +4,24 @@ import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'dev-only-change-me')
 DEBUG = os.getenv('DJANGO_DEBUG', '1') == '1'
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', '')
+if not SECRET_KEY:
+    if not DEBUG:
+        from django.core.exceptions import ImproperlyConfigured
+        raise ImproperlyConfigured('Set DJANGO_SECRET_KEY for production.')
+    import secrets
+    secret_file = BASE_DIR / '.local-secret'
+    if not secret_file.exists():
+        try:
+            with secret_file.open('x', encoding='utf-8') as file:
+                file.write(secrets.token_urlsafe(64))
+        except FileExistsError:
+            pass
+    SECRET_KEY = secret_file.read_text(encoding='utf-8').strip()
+if not DEBUG and (len(SECRET_KEY) < 50 or SECRET_KEY == 'dev-only-change-me'):
+    from django.core.exceptions import ImproperlyConfigured
+    raise ImproperlyConfigured('Use a random DJANGO_SECRET_KEY of at least 50 characters.')
 ALLOWED_HOSTS = [h.strip() for h in os.getenv('DJANGO_ALLOWED_HOSTS', '127.0.0.1,localhost').split(',') if h.strip()]
 CSRF_TRUSTED_ORIGINS = [u.strip() for u in os.getenv('DJANGO_CSRF_TRUSTED_ORIGINS', '').split(',') if u.strip()]
 
@@ -22,6 +38,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -80,3 +97,23 @@ LOGIN_REDIRECT_URL = 'dashboard'
 LOGOUT_REDIRECT_URL = 'login'
 
 # For production set SECURE_PROXY_SSL_HEADER / HTTPS settings at the hosting layer.
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = Path(os.getenv('DJANGO_MEDIA_ROOT', str(BASE_DIR / 'media')))
+
+STORAGES = {
+    'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
+    'staticfiles': {'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage' if (not DEBUG or os.getenv('DJANGO_COLLECTSTATIC') == '1') else 'django.contrib.staticfiles.storage.StaticFilesStorage'},
+}
+if not DEBUG:
+    if not os.getenv('CREDENTIAL_ENCRYPTION_KEY'):
+        from django.core.exceptions import ImproperlyConfigured
+        raise ImproperlyConfigured('Set CREDENTIAL_ENCRYPTION_KEY for production.')
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 31536000
+    # Enable only behind a trusted reverse proxy that strips client-supplied headers.
+    if os.getenv('DJANGO_TRUST_PROXY', '0') == '1':
+        SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 10000

@@ -1,66 +1,25 @@
 from django.core.management.base import BaseCommand
+from django.db import transaction
+from workbooks.course_content import PAGES
+from workbooks.course_layout import block_layout
 from workbooks.models import WorkbookBlock, WorkbookPage, WorkbookTemplate
 
 
 class Command(BaseCommand):
-    help = 'Створює стартовий шаблон учнівської тетради.'
+    help = 'Створює та активує AI-зошит із 11 розділів, зберігаючи попередні тетради.'
 
+    @transaction.atomic
     def handle(self, *args, **options):
         template, _ = WorkbookTemplate.objects.get_or_create(
-            title='Моя навчальна тетрадь',
-            defaults={
-                'description': 'Особиста тетрадь для цілей, прогресу, занять, відкриттів, труднощів, проєктів, планування та рефлексії.',
-                'is_active': True,
-            },
+            title='МІЙ AI-ЗОШИТ',
+            defaults={'description': '11 кроків до самостійного навчання з AI. Твої інструменти, методи, експерименти та відкриття.', 'is_active': False},
         )
-        WorkbookTemplate.objects.exclude(id=template.id).update(is_active=False)
-
-        pages = [
-            ('Моя ціль', 'Що я хочу отримати від навчання?', [
-                ('textarea', 'Моя головна ціль на курс', {'placeholder': 'Наприклад: навчитися використовувати ШІ для навчання самостійно…'}),
-                ('checkboxes', 'Що для мене зараз найважливіше?', {'options': ['Краще розуміти складні теми', 'Швидше виконувати завдання', 'Навчитися планувати', 'Краще запам’ятовувати', 'Готуватися до контрольних', 'Робити власні проєкти']}),
-                ('rating', 'Наскільки впевнено я зараз використовую ШІ?', {'max': 5}),
-            ]),
-            ('Мій прогрес', 'Відмічай зміни, які вже помічаєш.', [
-                ('checkboxes', 'Що в мене вже виходить краще?', {'options': ['Формулювати запити', 'Перевіряти відповіді ШІ', 'Пояснювати тему своїми словами', 'Планувати навчання', 'Працювати з великим матеріалом', 'Не копіювати відповідь без розуміння']}),
-                ('textarea', 'Мій прогрес у двох-трьох реченнях', {}),
-                ('rating', 'Як я оцінюю свій прогрес?', {'max': 5}),
-            ]),
-            ('Мої заняття', 'Короткі нотатки після уроків.', [
-                ('table', 'Журнал занять', {'columns': ['Тема', 'Що запам’ятав/ла', 'Що треба повторити'], 'rows': ['Заняття 1', 'Заняття 2', 'Заняття 3', 'Заняття 4', 'Заняття 5', 'Заняття 6']}),
-            ]),
-            ('Мої відкриття', 'Збирай корисні прийоми та ідеї.', [
-                ('textarea', 'Найкорисніший промпт або прийом, який я відкрив/ла', {}),
-                ('textarea', 'Де я можу це використати?', {}),
-            ]),
-            ('Мої труднощі', 'Не ховаємо складне — розкладаємо його на частини.', [
-                ('textarea', 'Що зараз викликає найбільше труднощів?', {}),
-                ('checkboxes', 'Що я вже спробував/ла?', {'options': ['Попросив/ла пояснити простіше', 'Попросив/ла приклад', 'Розбив/ла задачу на кроки', 'Перевірив/ла інше джерело', 'Сформулював/ла питання по-іншому', 'Попросив/ла допомогу викладача']}),
-                ('textarea', 'Що спробую наступним кроком?', {}),
-            ]),
-            ('Мої проєкти', 'Фіксуй, що ти створюєш, а не лише що вивчаєш.', [
-                ('table', 'Мої проєкти', {'columns': ['Назва', 'Що я зробив/ла', 'Що допоміг зробити ШІ', 'Що хочу покращити'], 'rows': ['Проєкт 1', 'Проєкт 2', 'Проєкт 3']}),
-            ]),
-            ('Мій план', 'Перетворюємо «треба вчитися» на конкретні дії.', [
-                ('text', 'Моя головна задача на цей тиждень', {}),
-                ('checkboxes', 'Що я планую зробити?', {'options': ['Повторити тему', 'Виконати практику', 'Зробити тест/самоперевірку', 'Попрацювати над проєктом', 'Переглянути матеріали уроку', 'Поставити питання викладачу']}),
-                ('table', 'Міні-план', {'columns': ['Завдання', 'Коли зроблю', 'Готово / результат'], 'rows': ['1', '2', '3']}),
-            ]),
-            ('Моя рефлексія', 'Підсумок: що змінилось у моєму способі навчатися?', [
-                ('textarea', 'Три речі, які я тепер роблю інакше', {}),
-                ('textarea', 'Яку помилку у роботі з ШІ я більше не хочу повторювати?', {}),
-                ('rating', 'Наскільки самостійно я можу використовувати ШІ для навчання?', {'max': 5}),
-                ('textarea', 'Мій наступний крок після курсу', {}),
-            ]),
-        ]
-
-        if template.pages.exists():
-            self.stdout.write(self.style.WARNING('Шаблон уже містить сторінки — seed не змінює існуючу структуру.'))
-            return
-
-        for p_idx, (title, subtitle, blocks) in enumerate(pages):
-            page = WorkbookPage.objects.create(template=template, title=title, subtitle=subtitle, position=p_idx)
-            for b_idx, (block_type, label, config) in enumerate(blocks):
-                WorkbookBlock.objects.create(page=page, block_type=block_type, label=label, config=config, position=b_idx)
-
-        self.stdout.write(self.style.SUCCESS(f'Створено шаблон: {template.title} ({len(pages)} сторінок).'))
+        if not template.pages.exists():
+            for p_idx, (title, subtitle, blocks) in enumerate(PAGES):
+                page = WorkbookPage.objects.create(template=template, title=title, subtitle=subtitle, position=p_idx)
+                for b_idx, (block_type, label, config) in enumerate(blocks):
+                    WorkbookBlock.objects.create(page=page, block_type=block_type, label=label, config=config, position=b_idx, **block_layout(p_idx, b_idx, label))
+        WorkbookTemplate.objects.exclude(pk=template.pk).update(is_active=False)
+        template.is_active = True
+        template.save(update_fields=['is_active'])
+        self.stdout.write(self.style.SUCCESS(f'Активовано AI-зошит: {template.pages.count()} розділів.'))

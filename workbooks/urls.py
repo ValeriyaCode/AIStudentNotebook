@@ -2,6 +2,8 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+    path('admin-panel/settings/', views.teacher_settings, name='teacher_settings'),
+    path('admin-panel/workbook/<int:workbook_id>/pdf/', views.admin_student_pdf, name='admin_student_pdf'),
     path('', views.dashboard, name='dashboard'),
     path('page/<int:page_id>/', views.page_detail, name='page_detail'),
     path('export/pdf/', views.export_pdf, name='export_pdf'),

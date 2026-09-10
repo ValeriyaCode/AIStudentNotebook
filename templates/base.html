@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}Моя тетрадь{% endblock %}</title>
-    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+    <link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260910-reviewed">
 </head>
 <body>
 <header class="topbar">
@@ -21,5 +21,6 @@
     {% for message in messages %}<div class="message {{ message.tags }}">{{ message }}</div>{% endfor %}
     {% block content %}{% endblock %}
 </main>
+<script src="{% static 'js/forms.js' %}" defer></script>
 </body>
 </html>
