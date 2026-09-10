@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% load workbook_extras %}
+{% block title %}{{ page.title }}{% endblock %}
+{% block content %}
+<a class="back" href="{% url 'dashboard' %}">← До змісту</a>
+<section class="page-heading">
+    <div class="eyebrow">Сторінка {{ page.position|add:1 }}</div>
+    <h1>{{ page.title }}</h1>
+    <p>{{ page.subtitle }}</p>
+</section>
+<form method="post" class="notebook-form">{% csrf_token %}
+    {% for block in blocks %}
+    <section class="field-card">
+        {% if block.block_type == 'static_text' %}
+            <div class="static-text">{{ block.label }}</div>
+        {% elif block.block_type == 'text' %}
+            <label for="block_{{ block.id }}">{{ block.label }}{% if block.required %} *{% endif %}</label>
+            {% if block.help_text %}<p class="help">{{ block.help_text }}</p>{% endif %}
+            <input id="block_{{ block.id }}" name="block_{{ block.id }}" type="text" value="{{ block.current_value }}" placeholder="{{ block.config.placeholder|default:'' }}">
+        {% elif block.block_type == 'textarea' %}
+            <label for="block_{{ block.id }}">{{ block.label }}{% if block.required %} *{% endif %}</label>
+            {% if block.help_text %}<p class="help">{{ block.help_text }}</p>{% endif %}
+            <textarea id="block_{{ block.id }}" name="block_{{ block.id }}" rows="{{ block.config.rows|default:5 }}" placeholder="{{ block.config.placeholder|default:'' }}">{{ block.current_value }}</textarea>
+        {% elif block.block_type == 'checkboxes' %}
+            <label>{{ block.label }}</label>
+            <div class="check-grid">
+            {% for option in block.config.options %}
+                <label class="check-item"><input type="checkbox" name="block_{{ block.id }}" value="{{ option }}" {% if block.current_value|is_selected:option %}checked{% endif %}><span>{{ option }}</span></label>
+            {% endfor %}
+            </div>
+        {% elif block.block_type == 'select' %}
+            <label>{{ block.label }}</label>
+            <select name="block_{{ block.id }}"><option value="">— Оберіть —</option>{% for option in block.config.options %}<option value="{{ option }}" {% if block.current_value == option %}selected{% endif %}>{{ option }}</option>{% endfor %}</select>
+        {% elif block.block_type == 'rating' %}
+            <label>{{ block.label }}</label>
+            <div class="rating">
+                {% for i in block.rating_values %}
+                    <label><input type="radio" name="block_{{ block.id }}" value="{{ i }}" {% if block.current_value|stringformat:'s' == i %}checked{% endif %}><span>★</span></label>
+                {% endfor %}
+            </div>
+        {% elif block.block_type == 'table' %}
+            <label>{{ block.label }}</label>
+            <div class="table-wrap"><table class="input-table"><thead><tr><th></th>{% for col in block.table_columns %}<th>{{ col }}</th>{% endfor %}</tr></thead><tbody>{% for row in block.table_rows %}<tr><th>{{ row.label }}</th>{% for cell in row.cells %}<td><textarea name="{{ cell.name }}" rows="2">{{ cell.value }}</textarea></td>{% endfor %}</tr>{% endfor %}</tbody></table></div>
+        {% endif %}
+    </section>
+    {% endfor %}
+    <div class="form-actions">
+        {% if prev_page %}<a class="button ghost" href="{% url 'page_detail' prev_page.id %}">← Назад</a>{% endif %}
+        <button class="button secondary" type="submit" name="save">Зберегти</button>
+        {% if next_page %}<button class="button primary" type="submit" name="save_next">Зберегти й далі →</button>{% endif %}
+    </div>
+</form>
+{% endblock %}

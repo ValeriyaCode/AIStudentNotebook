@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block title %}Адмін-панель{% endblock %}
+{% block content %}
+<section class="hero"><div><div class="eyebrow">Адміністратор</div><h1>Тетради учнів</h1><p>Перегляд відповідей і керування структурою тетради.</p></div></section>
+<div class="admin-actions">
+    <a class="button primary" href="/django-admin/workbooks/workbooktemplate/">Редагувати шаблон</a>
+    <a class="button secondary" href="/django-admin/workbooks/workbookpage/">Сторінки та елементи</a>
+    <a class="button ghost" href="/django-admin/accounts/user/">Користувачі</a>
+</div>
+{% if template %}<p class="template-note">Активний шаблон: <strong>{{ template.title }}</strong></p>{% endif %}
+<div class="admin-list">
+    {% for wb in workbooks %}
+    <a class="student-row" href="{% url 'admin_student_workbook' wb.id %}"><div><strong>{{ wb.student.get_full_name|default:wb.student.username }}</strong><span>@{{ wb.student.username }} · {{ wb.student.email|default:'без email' }}</span></div><div class="student-meta"><strong>{{ wb.completion }}%</strong><span>Оновлено {{ wb.updated_at|date:'d.m.Y H:i' }}</span></div></a>
+    {% empty %}<div class="empty"><p>Ще немає зареєстрованих учнів із тетрадями.</p></div>{% endfor %}
+</div>
+{% endblock %}

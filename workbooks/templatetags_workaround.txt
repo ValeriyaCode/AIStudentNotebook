@@ -1,0 +1,1 @@
+Django templates intentionally avoid arbitrary dictionary lookup by key. The PDF/admin views use a tiny custom filter defined in workbooks/templatetags/workbook_extras.py.

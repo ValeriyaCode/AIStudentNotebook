@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block title %}Моя тетрадь{% endblock %}
+{% block content %}
+{% if workbook %}
+<section class="hero">
+    <div>
+        <div class="eyebrow">Привіт, {{ user.first_name|default:user.username }} 👋</div>
+        <h1>{{ workbook.template.title }}</h1>
+        <p>{{ workbook.template.description }}</p>
+    </div>
+    <div class="progress-card"><strong>{{ workbook.completion }}%</strong><span>заповнено</span></div>
+</section>
+<div class="progress-track"><span style="width: {{ workbook.completion }}%"></span></div>
+<div class="page-grid">
+    {% for page in pages %}
+    <a class="page-card" href="{% url 'page_detail' page.id %}">
+        <span class="page-number">{{ forloop.counter }}</span>
+        <div><h2>{{ page.title }}</h2><p>{{ page.subtitle }}</p></div>
+        <span class="arrow">→</span>
+    </a>
+    {% endfor %}
+</div>
+<a class="button secondary" href="{% url 'export_pdf' %}">Зберегти тетрадь у PDF</a>
+{% else %}
+<div class="empty"><h1>Тетрадь ще не готова</h1><p>Адміністратор має створити та активувати шаблон.</p></div>
+{% endif %}
+{% endblock %}

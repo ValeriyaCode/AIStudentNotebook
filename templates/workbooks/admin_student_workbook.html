@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% load workbook_extras %}
+{% block title %}Тетрадь учня{% endblock %}
+{% block content %}
+<a class="back" href="{% url 'admin_dashboard' %}">← До учнів</a>
+<section class="page-heading"><div class="eyebrow">Перегляд відповідей</div><h1>{{ workbook.student.get_full_name|default:workbook.student.username }}</h1><p>{{ workbook.template.title }}</p></section>
+{% for page in pages %}
+<section class="review-page"><h2>{{ page.title }}</h2>{% for block in page.blocks.all %}{% if block.block_type != 'static_text' %}<div class="review-answer"><strong>{{ block.label }}</strong><pre>{{ answers|get_item:block.id }}</pre></div>{% endif %}{% endfor %}</section>
+{% endfor %}
+{% endblock %}

@@ -1,0 +1,25 @@
+{% load static %}
+<!doctype html>
+<html lang="uk">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Моя тетрадь{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+</head>
+<body>
+<header class="topbar">
+    <a class="brand" href="{% url 'dashboard' %}">AI Notebook</a>
+    <nav>
+        {% if user.is_authenticated %}
+            {% if user.is_staff or user.role == 'admin' %}<a href="{% url 'admin_dashboard' %}">Адмін</a>{% endif %}
+            <form action="{% url 'logout' %}" method="post" class="inline">{% csrf_token %}<button class="link-button">Вийти</button></form>
+        {% endif %}
+    </nav>
+</header>
+<main class="shell">
+    {% for message in messages %}<div class="message {{ message.tags }}">{{ message }}</div>{% endfor %}
+    {% block content %}{% endblock %}
+</main>
+</body>
+</html>
