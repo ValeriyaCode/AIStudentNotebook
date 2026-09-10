@@ -1,14 +1,18 @@
 {% extends 'base.html' %}
+{% load static %}
+{% block body_class %}illustrated notebook-home{% endblock %}
+{% block decoration %}{% include 'includes/plants.html' %}{% endblock %}
 {% block title %}Моя тетрадь{% endblock %}
 {% block content %}
 {% if workbook %}
 <section class="hero">
     <div>
         <div class="eyebrow">Привіт, {{ user.first_name|default:user.username }} 👋</div>
-        <h1>{{ workbook.template.title }}</h1>
-        <p>{{ workbook.template.description }}</p>
+        <h1><span class="yellow-underline">Мій</span> AI-щоденник</h1>
+        <p>11 кроків до самостійного навчання з AI. Твої інструменти, методи, експерименти та відкриття.</p>
     </div>
-    <div class="progress-card"><strong>{{ available_progress }}%</strong><span>доступних розділів</span><small>Весь курс: {{ workbook.completion }}%</small></div>
+    <img class="hero-robot scene-art" src="{% static 'images/design/notebook/robot.png' %}" alt="">
+    <div class="progress-card"><div class="progress-label">Твій прогрес</div><div class="progress-ring" style="--progress: {{ available_progress }}" aria-hidden="true"></div><strong>{{ available_progress }}%</strong><span>доступних розділів</span><small>Весь курс: {{ workbook.completion }}%</small></div>
 </section>
 <div class="progress-track"><span style="width: {{ available_progress }}%"></span></div>
 <div class="page-grid">
@@ -20,6 +24,7 @@
     {% if page.is_open %}</a>{% else %}</div>{% endif %}
     {% endfor %}
 </div>
+<img class="notebook-character scene-art" src="{% static 'images/design/notebook/girl.png' %}" alt=""><img class="notebook-books scene-art" src="{% static 'images/design/notebook/books.png' %}" alt="">
 <a class="button secondary" href="{% url 'export_pdf' %}">Зберегти тетрадь у PDF</a>
 {% else %}
 <div class="empty"><h1>Тетрадь ще не готова</h1><p>Адміністратор має створити та активувати шаблон.</p></div>

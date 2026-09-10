@@ -5,16 +5,17 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}Моя тетрадь{% endblock %}</title>
-    <link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260910-reviewed">
+    <link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260910-illustrated">
 </head>
-<body>
+<body class="{% block body_class %}{% endblock %}">
+{% block decoration %}{% endblock %}
 <header class="topbar">
-    <a class="brand" href="{% url 'dashboard' %}">AI Notebook</a>
+    <a class="brand" href="{% url 'dashboard' %}"><span class="brand-mark" aria-hidden="true">✳</span> AI Notebook</a>
     <nav>
         {% if user.is_authenticated %}
             {% if user.is_staff or user.role == 'admin' %}<a href="{% url 'admin_dashboard' %}">Адмін</a>{% endif %}
             <form action="{% url 'logout' %}" method="post" class="inline">{% csrf_token %}<button class="link-button">Вийти</button></form>
-        {% endif %}
+        {% else %}<a class="nav-login" href="{% url 'login' %}">Увійти</a>{% endif %}
     </nav>
 </header>
 <main class="shell">

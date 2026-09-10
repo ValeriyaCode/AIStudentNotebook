@@ -152,21 +152,15 @@ def export_pdf(request):
 
 @user_passes_test(_is_admin)
 def admin_dashboard(request):
-    from django.db.models import Q, Count
+    from django.db.models import Count
     from accounts.group_views import teacher_groups
     from accounts.models import User
     archived = request.GET.get('archive') == '1'
-    query = request.GET.get('q', '').strip()
     groups = teacher_groups(request.user).filter(is_archived=archived).annotate(student_count=Count('students', distinct=True))
-    if query:
-        groups = groups.filter(Q(name__icontains=query) | Q(students__first_name__icontains=query) |
-                               Q(students__last_name__icontains=query) | Q(students__username__icontains=query)).distinct()
     unassigned = User.objects.none()
     if request.user.is_superuser and not archived:
         unassigned = User.objects.filter(study_group__isnull=True, is_staff=False, is_superuser=False, role='student')
-        if query:
-            unassigned = unassigned.filter(Q(first_name__icontains=query) | Q(last_name__icontains=query) | Q(username__icontains=query))
-    return render(request, 'workbooks/admin_dashboard.html', {'groups': groups, 'unassigned': unassigned, 'archived': archived, 'q': query})
+    return render(request, 'workbooks/admin_dashboard.html', {'groups': groups, 'unassigned': unassigned, 'archived': archived})
 
 
 

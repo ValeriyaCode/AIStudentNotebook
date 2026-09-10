@@ -1,10 +1,22 @@
 {% extends 'base.html' %}
-{% block title %}Вхід{% endblock %}
+{% load static %}
+{% block title %}Вхід — AI Notebook{% endblock %}
+{% block body_class %}illustrated login-page{% endblock %}
+{% block decoration %}{% include 'includes/plants.html' %}{% endblock %}
 {% block content %}
-<div class="auth-card">
-    <div class="eyebrow">Твоя особиста навчальна тетрадь</div>
-    <h1>Увійти</h1>
-    <form method="post" class="stack">{% csrf_token %}{{ form.as_p }}<button class="button primary">Увійти</button></form>
-    <p class="muted">Учням логін і пароль надає викладач.</p>
-</div>
+<section class="login-scene">
+    <div class="login-intro">
+        <h1>Твій AI<br><span class="yellow-underline">щоденник</span></h1>
+        <p>Навчайся з AI. Плануй, аналізуй,<br>розвивайся — усе в одному місці.</p>
+        <ul class="benefits"><li><span aria-hidden="true">⌂</span>Твій особистий<br>помічник</li><li><span aria-hidden="true">▥</span>Більше<br>продуктивності</li><li><span aria-hidden="true">✧</span>Реальні<br>результати</li></ul>
+    </div>
+    <div class="auth-card" id="login-form">
+        <div class="eyebrow">Твій особистий навчальний зошит</div>
+        <h2>Увійти<span class="sun-rays" aria-hidden="true">✳</span></h2>
+        <form method="post" class="stack">{% csrf_token %}{{ form.as_p }}<button class="button primary" type="submit">Увійти</button></form>
+        <p class="muted">Учням логін і пароль надає викладач.</p>
+    </div>
+    <img class="login-character scene-art" src="{% static 'images/design/log_in/girl.png' %}" alt="" fetchpriority="high">
+    <img class="login-books scene-art" src="{% static 'images/design/log_in/book.png' %}" alt="">
+</section>
 {% endblock %}

@@ -93,14 +93,11 @@ def group_detail(request, group_id):
                         receipt.group = group
                         receipt.save(update_fields=['group'])
                 return redirect('group_credentials', group_id=group.pk)
-    query = request.GET.get('q', '').strip()
     students = group.students.prefetch_related('workbooks').order_by('first_name', 'username')
-    if query:
-        students = students.filter(Q(first_name__icontains=query) | Q(last_name__icontains=query) | Q(username__icontains=query))
     return render(request, 'accounts/group_detail.html', {
         'group': group, 'form': form, 'names_form': names,
         'pages': group.template.pages.all(), 'open_ids': set(group.open_pages.values_list('pk', flat=True)),
-        'students': students, 'q': query, 'submission_token': issue(request.user, f'add-students:{group.pk}'),
+        'students': students, 'submission_token': issue(request.user, f'add-students:{group.pk}'),
     })
 
 

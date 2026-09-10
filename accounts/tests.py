@@ -169,7 +169,7 @@ class GroupTests(TestCase):
         student.refresh_from_db()
         self.assertEqual(student.password, changed)
 
-    def test_transfer_and_search(self):
+    def test_transfer(self):
         group, _ = self.create_group()
         target = StudyGroup.objects.create(name='Destination', start_date='2026-09-20', teacher=self.teacher, template=group.template)
         student = group.students.first()
@@ -180,8 +180,8 @@ class GroupTests(TestCase):
         student.refresh_from_db()
         self.assertEqual(student.study_group_id, target.pk)
         self.assertEqual(student.workbooks.get().pk, original_book)
-        self.assertContains(self.client.get(reverse('admin_dashboard'), {'q': 'Нове'}), 'Destination')
-        self.assertContains(self.client.get(reverse('group_detail', args=[target.pk]), {'q': 'Нове'}), student.username)
+        self.assertContains(self.client.get(reverse('admin_dashboard')), 'Destination')
+        self.assertContains(self.client.get(reverse('group_detail', args=[target.pk])), student.username)
         other_teacher = User.objects.create_user(username='foreign_teacher', is_staff=True)
         other = StudyGroup.objects.create(name='Foreign', start_date='2026-09-20', teacher=other_teacher, template=group.template)
         self.client.post(url, {'first_name': 'Attempt', 'study_group': other.pk})
