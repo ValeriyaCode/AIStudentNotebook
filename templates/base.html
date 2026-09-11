@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}Моя тетрадь{% endblock %}</title>
-    <link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260911-refined">
+    <link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260911-polished">
 </head>
 <body class="illustrated {% block body_class %}{% endblock %}">
 {% block decoration %}{% include 'includes/plants.html' %}{% endblock %}
@@ -13,9 +13,9 @@
     <a class="brand" href="{% url 'dashboard' %}"><img class="brand-logo" src="{% static 'images/design/logo/white_yellow.png' %}" alt="Логотип Валерії Ярош"> AI Notebook</a>
     <nav>
         {% if user.is_authenticated %}
-            {% if user.is_staff or user.role == 'admin' %}<a href="{% url 'admin_dashboard' %}">Адмін</a>{% endif %}
-            <form action="{% url 'logout' %}" method="post" class="inline">{% csrf_token %}<button class="link-button">Вийти</button></form>
-        {% else %}<a class="nav-login" href="{% url 'login' %}">Увійти</a>{% endif %}
+            {% if user.is_staff or user.role == 'admin' %}<a class="nav-pill nav-accent" href="{% url 'admin_dashboard' %}">Адмін</a>{% endif %}
+            <form action="{% url 'logout' %}" method="post" class="inline">{% csrf_token %}<button class="nav-pill nav-light">Вийти</button></form>
+        {% else %}<a class="nav-pill nav-accent" href="{% url 'login' %}">Увійти</a>{% endif %}
     </nav>
 </header>
 <main class="shell">
