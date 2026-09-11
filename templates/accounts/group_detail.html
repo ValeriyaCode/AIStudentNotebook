@@ -5,7 +5,7 @@
 <h2>Учні</h2><a class="button secondary" href="{% url 'group_credentials' group.pk %}">Логіни та паролі</a><div class="admin-list group-students">
 {% for student in students %}
 <section class="student-row compact-student">
-<strong class="student-name {% if student.is_active %}status-active{% else %}status-inactive{% endif %}">{{ student.get_full_name }}</strong>
+<div class="student-name"><strong class="{% if student.is_active %}status-active{% else %}status-inactive{% endif %}">{{ student.get_full_name }}</strong>{% for wb in student.workbooks.all %}{% if wb.template_id == group.template_id %}<span class="student-completion">Заповнено {{ wb.completion }}%</span>{% endif %}{% endfor %}</div>
 <div class="student-workbook">{% for wb in student.workbooks.all %}{% if wb.template_id == group.template_id %}<a class="button primary" href="{% url 'admin_student_workbook' wb.pk %}">Перейти до зошиту →</a>{% endif %}{% endfor %}</div>
 <form method="post" action="{% url 'student_action' group.pk student.pk %}" class="student-status">{% csrf_token %}<button type="submit" role="switch" aria-checked="{% if student.is_active %}true{% else %}false{% endif %}" aria-label="Активність {{ student.get_full_name }}" class="activity-toggle {% if student.is_active %}is-active{% endif %}" name="action" value="{% if student.is_active %}deactivate{% else %}activate{% endif %}"><span class="status-label">{% if student.is_active %}Активний{% else %}Неактивний{% endif %}</span><span class="toggle-track"></span></button></form>
 <a class="button ghost" href="{% url 'student_edit' student.pk %}">Редагувати</a>

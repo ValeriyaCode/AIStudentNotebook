@@ -82,9 +82,15 @@ const sideArtwork = document.querySelector('.assignment-art');
 if (sideArtwork) {
     const reveal = async () => {
         try { await sideArtwork.decode(); } catch (_) {}
-        requestAnimationFrame(() => requestAnimationFrame(() => {
-            setTimeout(() => sideArtwork.classList.add('art-visible'), 180);
-        }));
+        const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const offset = document.body.classList.contains('art-left') ? '-160px' : '160px';
+        const animation = sideArtwork.animate([
+            {opacity: 0, translate: reduced ? '0 0' : `${offset} 0`, filter: reduced ? 'none' : 'blur(18px)'},
+            {opacity: 1, translate: '0 0', filter: 'blur(0px)'}
+        ], {duration: reduced ? 1200 : 2400, delay: 150, easing: 'cubic-bezier(.22,.61,.36,1)', fill: 'both'});
+        await animation.finished;
+        sideArtwork.classList.add('art-visible');
+        animation.cancel();
     };
     reveal();
 }
