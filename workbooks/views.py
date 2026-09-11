@@ -132,7 +132,7 @@ def page_detail(request, page_id):
         'page': page,
         'blocks': blocks, 'page_form': form, 'read_only': read_only,
         'has_fields': any(block.block_type != WorkbookBlock.Type.STATIC_TEXT for block in blocks),
-        'assignment_art': 'images/design/other/' + ['notebook.png', 'books.png', 'lamp.png', 'headphone.png', 'pens.png', 'laptop.png', 'keyboard.png', 'cup.png', 'mouse.png', 'robot.png', 'books.png', 'notebook.png'][page.position % 12],
+        'assignment_art': 'images/design/other/' + ['notebook.png', 'books.png', 'lamp.png', 'headphone.png', 'pens.png', 'laptop.png', 'keyboard.png', 'cup.png', 'mouse.png', 'robot.png', 'cup_victory.png', 'present.png'][page.position % 12],
         'prev_page': prev_page,
         'next_page': next_page,
     })
