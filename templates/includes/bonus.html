@@ -1,0 +1,10 @@
+{% load static %}
+<section class="bonus-offer">
+    <p class="bonus-intro">{{ bonus.intro }}</p>
+    <img class="bonus-teacher" src="{% static 'images/design/notebook/teacher.png' %}" alt="Викладачка запрошує на навчання">
+    <div class="bonus-courses">{% for course in bonus.courses %}<article class="field-card bonus-course">
+        <img src="{% static course.icon %}" alt="" aria-hidden="true">
+        <h2>{{ course.name }}</h2><p>{{ course.text }}</p>
+    </article>{% endfor %}</div>
+    <div class="bonus-discount"><strong>{{ bonus.discount }}</strong><p>{{ bonus.contact }}</p></div>
+</section>

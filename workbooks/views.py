@@ -5,6 +5,7 @@ from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404, redirect, render
 
 from .forms import extract_answer_value, WorkbookPageForm
+from .bonus import BONUS
 from django.db import transaction
 from django.utils import timezone
 from .models import StudentAnswer, StudentWorkbook, WorkbookBlock, WorkbookPage, WorkbookTemplate
@@ -129,6 +130,7 @@ def page_detail(request, page_id):
 
     return render(request, 'workbooks/page_detail.html', {
         'workbook': workbook,
+        'bonus': BONUS if page.title == 'БОНУС' else None,
         'page': page,
         'blocks': blocks, 'page_form': form, 'read_only': read_only,
         'has_fields': any(block.block_type != WorkbookBlock.Type.STATIC_TEXT for block in blocks),
@@ -176,7 +178,7 @@ def admin_student_workbook(request, workbook_id):
     return render(request, 'workbooks/admin_student_workbook.html', {
         'workbook': workbook,
         'pages': pages,
-        'answers': answers,
+        'answers': answers, 'bonus': BONUS,
     })
 
 

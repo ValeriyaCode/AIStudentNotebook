@@ -6,6 +6,7 @@ from xml.sax.saxutils import escape
 from reportlab.lib import colors
 from reportlab.lib.utils import ImageReader
 from django.conf import settings
+from .bonus import BONUS
 from functools import lru_cache
 from PIL import Image as PillowImage, ImageFilter
 from reportlab.lib.pagesizes import A4
@@ -114,6 +115,22 @@ def build_workbook_pdf(workbook, pages=None):
     if pages is None:
         pages = workbook.template.pages.all()
     for page in pages.prefetch_related('blocks'):
+        if page.title == 'БОНУС':
+            story.extend([PageBreak(), SectionNumber(page.position + 1), Spacer(1, 10), p('БОНУС', heading),
+                          p(BONUS['intro'], body), artwork(assets / 'notebook/teacher.png', 110*mm, 65*mm), Spacer(1, 6*mm)])
+            cards = []
+            for course in BONUS['courses']:
+                cards.append([artwork(Path(settings.BASE_DIR) / 'static' / course['icon'], 16*mm, 16*mm),
+                              p(course['name'], label), p(course['text'], body)])
+            courses = Table([[cards[0], '', cards[1]]], colWidths=[(doc.width-12)/2, 12, (doc.width-12)/2])
+            courses.setStyle(TableStyle([('BACKGROUND',(0,0),(0,0),colors.white),('BACKGROUND',(2,0),(2,0),colors.white),
+                ('BOX',(0,0),(0,0),.7,colors.HexColor('#ead9a1')),('BOX',(2,0),(2,0),.7,colors.HexColor('#ead9a1')),
+                ('VALIGN',(0,0),(-1,-1),'TOP'),('LEFTPADDING',(0,0),(-1,-1),12),('RIGHTPADDING',(0,0),(-1,-1),12),
+                ('TOPPADDING',(0,0),(-1,-1),12),('BOTTOMPADDING',(0,0),(-1,-1),12)]))
+            discount = ParagraphStyle('discount', parent=label, alignment=1, fontSize=14, leading=21,
+                                      backColor=colors.HexColor('#ffda65'), borderPadding=12, borderRadius=8, spaceBefore=20, spaceAfter=20)
+            story.extend([courses, Spacer(1, 8*mm), p(BONUS['discount'], discount), p(BONUS['contact'], body)])
+            continue
         page_blocks = list(page.blocks.all())
         tool_blocks = [block for block in page_blocks if block.card_style == 'tool']
         tool_lines = []

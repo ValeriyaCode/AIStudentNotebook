@@ -5,11 +5,11 @@
 <a class="back" href="{% url 'admin_dashboard' %}">← До учнів</a>
 <section class="page-heading"><div class="eyebrow">Перегляд відповідей</div><h1>{{ workbook.student.get_full_name|default:workbook.student.username }}</h1><p>{{ workbook.template.title }}</p></section>
 {% for page in pages %}
-<details class="review-page"><summary>{{ page.title }}</summary>{% for block in page.blocks.all %}{% if block.block_type != 'static_text' %}<div class="review-answer"><strong>{{ block.label }}</strong>{% with value=answers|get_item:block.id %}
+<details class="review-page"><summary>{{ page.title }}</summary>{% if page.title == 'БОНУС' %}{% include 'includes/bonus.html' %}{% else %}{% for block in page.blocks.all %}{% if block.block_type != 'static_text' %}<div class="review-answer"><strong>{{ block.label }}</strong>{% with value=answers|get_item:block.id %}
 {% if block.block_type == 'table' %}<div class="table-wrap"><table class="input-table"><thead><tr><th>№</th>{% for col in block.config.columns %}<th>{{ col }}</th>{% endfor %}</tr></thead><tbody>{% for row in value %}<tr><th>{{ row|get_item:'_row' }}</th>{% for col in block.config.columns %}<td>{{ row|get_item:col|default:'—'|linebreaksbr }}</td>{% endfor %}</tr>{% empty %}<tr><td>Ще не заповнено</td></tr>{% endfor %}</tbody></table></div>
 {% elif block.block_type == 'checkboxes' %}<ul>{% for option in value %}<li>{{ option }}</li>{% empty %}<li>Ще не заповнено</li>{% endfor %}</ul>
 {% elif block.block_type == 'rating' %}<p>{{ value|default:'—' }} / {{ block.config.max|default:5 }}</p>
-{% else %}<pre>{{ value|default:'—' }}</pre>{% endif %}{% endwith %}</div>{% endif %}{% endfor %}</details>
+{% else %}<pre>{{ value|default:'—' }}</pre>{% endif %}{% endwith %}</div>{% endif %}{% endfor %}{% endif %}</details>
 {% endfor %}
 <a class="button primary" href="{% url 'admin_student_pdf' workbook.pk %}">Експортувати PDF</a>
 {% endblock %}
