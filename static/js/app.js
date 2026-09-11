@@ -78,3 +78,13 @@ if (avatarInput) {
         image.src = previewUrl;
     });
 }
+const sideArtwork = document.querySelector('.assignment-art');
+if (sideArtwork) {
+    const reveal = async () => {
+        try { await sideArtwork.decode(); } catch (_) {}
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+            setTimeout(() => sideArtwork.classList.add('art-visible'), 180);
+        }));
+    };
+    reveal();
+}

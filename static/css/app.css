@@ -183,3 +183,7 @@ fieldset[disabled] .add-row,fieldset[disabled] .row-actions,fieldset[disabled] .
 @media(prefers-reduced-motion:reduce){.assignment-page .assignment-art{animation:none}.topbar .nav-pill{transition:none}}
 @media(min-width:1600px){.notebook-home .notebook-character{left:-65px}}
 @media(min-width:1251px) and (max-width:1599px){.notebook-home .notebook-character{left:-85px}}
+/* Start the entrance only after the picture is decoded, not while it downloads. */
+.assignment-page .assignment-art{animation:none;opacity:0;translate:var(--art-slide) 0;filter:blur(15px);transition:opacity 1.6s ease,translate 1.6s cubic-bezier(.2,.65,.25,1),filter 1.6s ease}
+.assignment-page .assignment-art.art-visible{opacity:1;translate:0 0;filter:blur(0) drop-shadow(0 18px 24px #44300012)}
+@media(prefers-reduced-motion:reduce){.assignment-page .assignment-art{transition:none}}
