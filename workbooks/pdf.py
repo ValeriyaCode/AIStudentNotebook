@@ -17,6 +17,22 @@ from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, PageBreak, 
 
 
 pdfmetrics.registerFont(TTFont('Workbook', str(Path(__file__).parent / 'fonts' / 'DejaVuSans.ttf')))
+pdfmetrics.registerFont(TTFont('WorkbookBold', str(Path(__file__).parent / 'fonts' / 'DejaVuSans-Bold.ttf')))
+
+
+class SectionNumber(Flowable):
+    def __init__(self, number):
+        super().__init__()
+        self.number = str(number)
+        self.width = self.height = 36
+
+    def draw(self):
+        self.canv.setFillColor(colors.HexColor('#ffd044'))
+        self.canv.circle(18, 18, 18, fill=1, stroke=0)
+        self.canv.setFillColor(colors.HexColor('#181818'))
+        self.canv.setFont('WorkbookBold', 15)
+        self.canv.drawCentredString(18, 12.5, self.number)
+
 
 
 @lru_cache(maxsize=4)
@@ -33,8 +49,8 @@ def build_workbook_pdf(workbook, pages=None):
                             topMargin=30*mm, bottomMargin=22*mm,
                             title=workbook.template.title, author='AI Notebook')
     body = ParagraphStyle('body', fontName='Workbook', fontSize=10, leading=15, spaceAfter=12, textColor=colors.HexColor('#28374d'))
-    heading = ParagraphStyle('heading', parent=body, fontSize=22, leading=28, spaceAfter=16)
-    label = ParagraphStyle('label', parent=body, fontSize=11, leading=16, textColor=colors.HexColor('#181818'), keepWithNext=True, spaceBefore=8, spaceAfter=10)
+    heading = ParagraphStyle('heading', parent=body, fontName='WorkbookBold', textColor=colors.HexColor('#181818'), fontSize=22, leading=28, spaceAfter=16)
+    label = ParagraphStyle('label', parent=body, fontName='WorkbookBold', fontSize=11, leading=16, textColor=colors.HexColor('#181818'), keepWithNext=True, spaceBefore=8, spaceAfter=10)
 
     def p(value, style=body):
         return Paragraph(escape(str(value if value not in (None, '') else '—')).replace('\n', '<br/>'), style)
@@ -59,12 +75,13 @@ def build_workbook_pdf(workbook, pages=None):
         canvas.setFillColor(colors.HexColor('#fbf2df'))
         canvas.ellipse(-100, -100, width+80, 55, fill=1, stroke=0)
         canvas.ellipse(width-125, height-330, width+180, height+80, fill=1, stroke=0)
-        canvas.setFillColor(colors.HexColor('#191919'))
-        canvas.roundRect(18*mm, height-22*mm, width-36*mm, 15*mm, 8, fill=1, stroke=0)
-        canvas.drawImage(str(assets/'logo/white_yellow.png'), 22*mm, height-22*mm, 15*mm, 15*mm, mask='auto')
-        canvas.setFont('Workbook', 10)
-        canvas.setFillColor(colors.white)
-        canvas.drawString(40*mm, height-16*mm, 'AI Notebook')
+        if document.page != 1:
+            canvas.setFillColor(colors.HexColor('#191919'))
+            canvas.roundRect(18*mm, height-22*mm, width-36*mm, 15*mm, 8, fill=1, stroke=0)
+            canvas.drawImage(str(assets/'logo/white_yellow.png'), 22*mm, height-22*mm, 15*mm, 15*mm, mask='auto')
+            canvas.setFont('Workbook', 10)
+            canvas.setFillColor(colors.white)
+            canvas.drawString(40*mm, height-16*mm, 'AI Notebook')
         canvas.setFillAlpha(.24)
         canvas.drawImage(soft_plant(str(assets/'plants/3.png')), -22*mm, height-67*mm, 48*mm, 64*mm, mask='auto')
         canvas.saveState()
@@ -87,16 +104,16 @@ def build_workbook_pdf(workbook, pages=None):
                 avatar = candidate
         except (ValueError, NotImplementedError):
             pass
-    story = [Spacer(1, 14*mm), p('МІЙ AI-ЩОДЕННИК', heading),
-             artwork(avatar, 65*mm, 65*mm), Spacer(1, 10*mm),
-             p(workbook.student.get_full_name() or workbook.student.username, heading),
-             p(workbook.template.description), Spacer(1, 10*mm),
-             p('Мої ідеї. Мої відкриття. Мій наступний крок.', answer_style)]
+    cover_title = ParagraphStyle('cover-title', parent=heading, fontSize=32, leading=40, alignment=1, spaceAfter=20)
+    cover_name = ParagraphStyle('cover-name', parent=heading, fontSize=22, leading=28, alignment=1)
+    story = [Spacer(1, 5*mm), p('МІЙ AI-ЩОДЕННИК', cover_title),
+             artwork(assets / 'log_in/girl.png', 130*mm, 145*mm), Spacer(1, 12*mm),
+             p(workbook.student.get_full_name() or workbook.student.username, cover_name)]
     answers = {answer.block_id: answer.value for answer in workbook.answers.all()}
     if pages is None:
         pages = workbook.template.pages.all()
     for page in pages.prefetch_related('blocks'):
-        title_card = Table([[[p(f'РОЗДІЛ {page.position + 1}', label), p(page.title, heading), p(page.subtitle)], artwork(assets / 'other' / illustrations[page.position % 12], 34*mm, 34*mm)]], colWidths=[doc.width-40*mm, 40*mm])
+        title_card = Table([[[SectionNumber(page.position + 1), Spacer(1, 8), p(page.title, heading), p(page.subtitle)], artwork(assets / 'other' / illustrations[page.position % 12], 34*mm, 34*mm)]], colWidths=[doc.width-40*mm, 40*mm])
         title_card.setStyle(TableStyle([('VALIGN',(0,0),(-1,-1),'MIDDLE'),('LEFTPADDING',(0,0),(-1,-1),0),('BOTTOMPADDING',(0,0),(-1,-1),12)]))
         story.extend([PageBreak(), title_card, Spacer(1, 4*mm)])
         page_blocks = list(page.blocks.all())
@@ -152,6 +169,8 @@ def build_workbook_pdf(workbook, pages=None):
             else:
                 story.append(p(value, answer_style))
             story.append(Spacer(1, 5*mm))
+        if page.title == 'БОНУС':
+            story.extend([Spacer(1, 8*mm), artwork(assets / 'log_in/girl.png', 100*mm, 112*mm)])
         # A trailing spacer can spill onto an otherwise empty page before PageBreak.
         if isinstance(story[-1], Spacer):
             story.pop()

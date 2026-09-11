@@ -70,7 +70,7 @@ class WorkbookTests(TestCase):
         self.assertGreaterEqual(len(reader.pages), 12)
         self.assertIn('Українська відповідь <текст> & деталі', text)
         for page in self.template.pages.all():
-            self.assertIn(page.title, text)
+            self.assertIn(' '.join(page.title.split()), ' '.join(text.split()))
         self.client.logout()
         self.assertEqual(self.client.get(reverse('export_pdf')).status_code, 302)
 
