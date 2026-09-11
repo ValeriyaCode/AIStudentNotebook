@@ -106,17 +106,25 @@ def build_workbook_pdf(workbook, pages=None):
             pass
     cover_title = ParagraphStyle('cover-title', parent=heading, fontSize=32, leading=40, alignment=1, spaceAfter=20)
     cover_name = ParagraphStyle('cover-name', parent=heading, fontSize=22, leading=28, alignment=1)
-    story = [Spacer(1, 5*mm), p('МІЙ AI-ЩОДЕННИК', cover_title),
-             artwork(assets / 'log_in/girl.png', 130*mm, 145*mm), Spacer(1, 12*mm),
-             p(workbook.student.get_full_name() or workbook.student.username, cover_name)]
+    story = [Spacer(1, 5*mm),
+             p(f'{workbook.student.first_name or workbook.student.username}, привіт!', cover_name),
+             p('ТВІЙ AI-ЩОДЕННИК', cover_title),
+             artwork(assets / 'log_in/girl.png', 130*mm, 145*mm)]
     answers = {answer.block_id: answer.value for answer in workbook.answers.all()}
     if pages is None:
         pages = workbook.template.pages.all()
     for page in pages.prefetch_related('blocks'):
-        title_card = Table([[[SectionNumber(page.position + 1), Spacer(1, 8), p(page.title, heading), p(page.subtitle)], artwork(assets / 'other' / illustrations[page.position % 12], 34*mm, 34*mm)]], colWidths=[doc.width-40*mm, 40*mm])
-        title_card.setStyle(TableStyle([('VALIGN',(0,0),(-1,-1),'MIDDLE'),('LEFTPADDING',(0,0),(-1,-1),0),('BOTTOMPADDING',(0,0),(-1,-1),12)]))
-        story.extend([PageBreak(), title_card, Spacer(1, 4*mm)])
         page_blocks = list(page.blocks.all())
+        tool_blocks = [block for block in page_blocks if block.card_style == 'tool']
+        tool_lines = []
+        for block in tool_blocks:
+            if block.block_type == 'static_text':
+                tool_lines.append(p(block.label, body))
+            else:
+                tool_lines.append(p(f'{block.label}: {answers.get(block.pk) or chr(8212)}', body))
+        title_card = Table([[[SectionNumber(page.position + 1), Spacer(1, 8), p(page.title, heading)], artwork(assets / 'other' / illustrations[page.position % 12], 34*mm, 34*mm)]], colWidths=[doc.width-40*mm, 40*mm])
+        title_card.setStyle(TableStyle([('VALIGN',(0,0),(-1,-1),'MIDDLE'),('LEFTPADDING',(0,0),(-1,-1),0),('BOTTOMPADDING',(0,0),(-1,-1),12)]))
+        story.extend([PageBreak(), title_card, *tool_lines, Spacer(1, 4*mm)])
         profile_fields = [block for block in page_blocks if block.half_width]
         if profile_fields:
             profile_cells = [[p(block.label, label), p(answers.get(block.pk, ''), body)] for block in profile_fields]
@@ -129,6 +137,8 @@ def build_workbook_pdf(workbook, pages=None):
             profile.setStyle(TableStyle([('BACKGROUND',(0,0),(-1,-1),colors.white),('BOX',(0,0),(-1,-1),.5,colors.HexColor('#e3dfd4')),('VALIGN',(0,0),(-1,-1),'MIDDLE'),('TOPPADDING',(0,0),(-1,-1),10),('BOTTOMPADDING',(0,0),(-1,-1),10)]))
             story.extend([p('Про мене', label), profile, Spacer(1, 6*mm)])
         for block in page_blocks:
+            if block in tool_blocks:
+                continue
             if block.half_width or (profile_fields and block.card_style == 'profile'):
                 continue
             if block.block_type == 'static_text':
@@ -170,7 +180,7 @@ def build_workbook_pdf(workbook, pages=None):
                 story.append(p(value, answer_style))
             story.append(Spacer(1, 5*mm))
         if page.title == 'БОНУС':
-            story.extend([Spacer(1, 8*mm), artwork(assets / 'log_in/girl.png', 100*mm, 112*mm)])
+            story.extend([Spacer(1, 8*mm), artwork(assets / 'notebook/girl.png', 120*mm, 112*mm)])
         # A trailing spacer can spill onto an otherwise empty page before PageBreak.
         if isinstance(story[-1], Spacer):
             story.pop()
