@@ -191,7 +191,7 @@ fieldset[disabled] .add-row,fieldset[disabled] .row-actions,fieldset[disabled] .
 .compact-student .student-completion{display:block;font-size:12px;color:#687181;margin-top:5px;font-weight:400}
 .bonus-offer{text-align:center}.bonus-intro{font-size:22px;line-height:1.5;max-width:760px;margin:0 auto 12px}.bonus-teacher{display:block;width:min(100%,520px);height:300px;object-fit:contain;margin:0 auto}.bonus-courses{display:grid;grid-template-columns:1fr 1fr;gap:20px;text-align:left}.bonus-course img{width:62px;height:62px;object-fit:contain;float:right}.bonus-course h2{font-size:28px;margin:10px 0 22px}.bonus-course p{line-height:1.7}.bonus-discount{background:#ffda65;border-radius:20px;padding:24px;margin-top:22px}.bonus-discount strong{font-size:24px}.bonus-discount p{margin-bottom:0;line-height:1.5}@media(max-width:600px){.bonus-courses{grid-template-columns:1fr}.bonus-teacher{height:230px}.bonus-intro{font-size:18px}.bonus-discount strong{font-size:20px}}
 /* The teacher presents the courses from behind the cards. */
-.bonus-offer{position:relative;isolation:isolate}.bonus-teacher{position:relative;z-index:0;width:min(100%,760px);height:520px;object-fit:contain;margin:0 auto -235px;pointer-events:none}.bonus-courses{position:relative;z-index:1}.bonus-course{background:#fff!important}.bonus-discount{position:relative;z-index:1}
-@media(max-width:600px){.bonus-teacher{width:100%;height:380px;margin-bottom:-155px}.bonus-courses{gap:14px}}
-.bonus-teacher{clip-path:inset(0 0 44% 0)}
-@media(max-width:600px){.bonus-teacher{clip-path:inset(0 0 40% 0)}}
+.bonus-offer{position:relative;isolation:isolate}.bonus-teacher{position:relative;z-index:0;width:min(100%,900px);height:640px;object-fit:contain;margin:0 auto -290px;pointer-events:none}.bonus-courses{position:relative;z-index:1}.bonus-course{background:#fff!important}.bonus-discount{position:relative;z-index:1}
+@media(max-width:600px){.bonus-teacher{width:100%;height:440px;margin-bottom:-200px}.bonus-courses{gap:14px}}
+
+
