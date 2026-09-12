@@ -32,5 +32,11 @@ document.querySelectorAll('.dashboard-profile').forEach(form => {
     form.addEventListener('input', update);
     form.addEventListener('change', update);
     window.addEventListener('pageshow', update);
+    form.addEventListener('focusin', update);
+    form.addEventListener('focusout', update);
+    // Browser autofill/password managers may change values without input/change events.
+    window.setInterval(() => {
+        if (!document.hidden) update();
+    }, 300);
     update();
 });
