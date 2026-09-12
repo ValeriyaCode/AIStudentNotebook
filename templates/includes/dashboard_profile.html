@@ -4,15 +4,16 @@
     {{ profile_form.errors }}
     <fieldset class="workbook-fields" {% if read_only %}disabled{% endif %}>
     <section class="field-card profile-card">
+        <div class="profile-avatar-column">
         {% include 'includes/avatar_editor.html' %}
-        <div class="field-content"><h2>Про мене</h2></div>
+        {% if not read_only %}<button class="button primary profile-save" type="submit" {% if not profile_form.errors %}hidden{% endif %}>Зберегти зміни</button>{% endif %}
+        </div>
         {% for block in profile_blocks %}
         <div class="field-content profile-field field-continuation">
             <label for="block_{{ block.pk }}">{{ block.label }}</label>
             <input id="block_{{ block.pk }}" name="block_{{ block.pk }}" value="{{ block.current_value }}" type="text">
         </div>
         {% endfor %}
-        {% if not read_only %}<div class="profile-save"><button class="button primary" type="submit">Зберегти про мене</button></div>{% endif %}
     </section>
     </fieldset>
 </form>

@@ -18,3 +18,19 @@ document.querySelectorAll('form[method="post"]').forEach(form => {
         form.querySelectorAll('[aria-disabled="true"]').forEach(button => button.removeAttribute('aria-disabled'));
     });
 });
+
+// Only offer profile saving when the displayed values differ from the loaded profile.
+document.querySelectorAll('.dashboard-profile').forEach(form => {
+    const button = form.querySelector('.profile-save');
+    if (!button) return;
+    const fields = [...form.querySelectorAll('input[type="text"]')];
+    const file = form.querySelector('input[type="file"]');
+    const hasErrors = !button.hidden;
+    const update = () => {
+        button.hidden = !(hasErrors || fields.some(field => field.value !== field.defaultValue) || file?.files.length);
+    };
+    form.addEventListener('input', update);
+    form.addEventListener('change', update);
+    window.addEventListener('pageshow', update);
+    update();
+});
