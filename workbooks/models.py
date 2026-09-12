@@ -26,7 +26,7 @@ class WorkbookPage(models.Model):
         ordering = ['position', 'id']
 
     def __str__(self):
-        return f'{self.position + 1}. {self.title}'
+        return self.title if self.title == 'БОНУС' else f'{self.position + 1}. {self.title}'
 
 
 class WorkbookBlock(models.Model):

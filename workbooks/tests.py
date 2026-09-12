@@ -101,7 +101,7 @@ class WorkbookTests(TestCase):
     def test_course_structure_and_repeat_seed_preserves_answers(self):
         from workbooks.course_content import PAGES
         self.assertEqual(list(self.template.pages.values_list('title', flat=True)), [p[0] for p in PAGES])
-        self.assertEqual(self.template.pages.count(), 12)
+        self.assertEqual(self.template.pages.count(), 13)
         workbook = StudentWorkbook.objects.create(student=self.user, template=self.template)
         block = self.template.pages.first().blocks.filter(block_type='text').first()
         answer = StudentAnswer.objects.create(workbook=workbook, block=block, value='Збережена відповідь')
@@ -140,7 +140,7 @@ class WorkbookTests(TestCase):
         from django.core.files.uploadedfile import SimpleUploadedFile
         image = BytesIO()
         Image.new('RGB', (800, 600), 'blue').save(image, format='PNG')
-        url = reverse('page_detail', args=[self.template.pages.first().pk])
+        url = reverse('dashboard')
         with tempfile.TemporaryDirectory() as directory, self.settings(MEDIA_ROOT=directory):
             self.client.post(url, {'avatar': SimpleUploadedFile('photo.png', image.getvalue(), content_type='image/png')})
             self.user.refresh_from_db()
@@ -221,7 +221,7 @@ class WorkbookTests(TestCase):
         from django.core.files.uploadedfile import SimpleUploadedFile
         image = BytesIO()
         Image.new('RGB', (50, 50), 'red').save(image, format='PNG')
-        url = reverse('page_detail', args=[self.template.pages.first().pk])
+        url = reverse('dashboard')
         with tempfile.TemporaryDirectory() as directory, self.settings(MEDIA_ROOT=directory):
             self.client.post(url, {'avatar': SimpleUploadedFile('first.png', image.getvalue())})
             self.user.refresh_from_db()
@@ -232,3 +232,25 @@ class WorkbookTests(TestCase):
             self.user.refresh_from_db()
             self.assertFalse(old_path.exists())
             self.assertTrue(Path(self.user.avatar.path).exists())
+
+    def test_dashboard_profile_and_personalization(self):
+        first = self.template.pages.get(position=0)
+        second = self.template.pages.get(position=1)
+        self.assertEqual(second.title, 'Персоналізація')
+        profile = first.blocks.get(label='Ім’я')
+        goal = first.blocks.get(label='Для чого я вже використовую AI')
+        self.assertTrue(second.blocks.filter(label='Додай свої варіанти').exists())
+        self.client.get(reverse('dashboard'))
+        workbook = StudentWorkbook.objects.get(student=self.user)
+        StudentAnswer.objects.create(workbook=workbook, block=goal, value='Keep this')
+        self.assertContains(self.client.get(reverse('dashboard')), f'name="block_{profile.pk}"')
+        self.assertNotContains(self.client.get(reverse('page_detail', args=[first.pk])), f'name="block_{profile.pk}"')
+        response = self.client.post(reverse('dashboard'), {f'block_{profile.pk}': 'Аліна'})
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(workbook.answers.get(block=profile).value, 'Аліна')
+        self.assertEqual(workbook.answers.get(block=goal).value, 'Keep this')
+        self.client.post(reverse('page_detail', args=[first.pk]), {f'block_{goal.pk}': 'Updated'})
+        self.assertEqual(workbook.answers.get(block=profile).value, 'Аліна')
+        self.user.study_group.is_archived = True
+        self.user.study_group.save()
+        self.assertEqual(self.client.post(reverse('dashboard'), {f'block_{profile.pk}': 'Changed'}).status_code, 403)

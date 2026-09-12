@@ -7,6 +7,7 @@ from reportlab.lib import colors
 from reportlab.lib.utils import ImageReader
 from django.conf import settings
 from .bonus import BONUS
+from .models import WorkbookBlock
 from functools import lru_cache
 from PIL import Image as PillowImage, ImageFilter
 from reportlab.lib.pagesizes import A4
@@ -57,7 +58,7 @@ def build_workbook_pdf(workbook, pages=None):
         return Paragraph(escape(str(value if value not in (None, '') else '—')).replace('\n', '<br/>'), style)
 
     assets = Path(settings.BASE_DIR) / 'static' / 'images' / 'design'
-    illustrations = ['notebook.png', 'books.png', 'lamp.png', 'headphone.png', 'pens.png',
+    illustrations = ['notebook.png', 'books.png', 'books.png', 'lamp.png', 'headphone.png', 'pens.png',
                      'laptop.png', 'keyboard.png', 'cup.png', 'mouse.png', 'robot.png', 'cup_victory.png', 'present.png']
     answer_style = ParagraphStyle('answer', parent=body, backColor=colors.white,
         borderColor=colors.HexColor('#e3dfd4'), borderWidth=.6, borderRadius=8,
@@ -110,13 +111,24 @@ def build_workbook_pdf(workbook, pages=None):
     story = [Spacer(1, 5*mm),
              p(f'{workbook.student.first_name or workbook.student.username}, привіт!', cover_name),
              p('ТВІЙ AI-ЩОДЕННИК', cover_title),
-             artwork(assets / 'log_in/girl.png', 130*mm, 145*mm)]
+             artwork(assets / 'log_in/girl.png', 110*mm, 115*mm)]
     answers = {answer.block_id: answer.value for answer in workbook.answers.all()}
     if pages is None:
         pages = workbook.template.pages.all()
+    profile_fields = list(WorkbookBlock.objects.filter(page__in=pages, half_width=True))
+    if profile_fields:
+        profile_cells = [[p(block.label, label), p(answers.get(block.pk, ''), body)] for block in profile_fields]
+        profile_rows = [profile_cells[index:index+2] for index in range(0, len(profile_cells), 2)]
+        if len(profile_rows[-1]) == 1:
+            profile_rows[-1].append('')
+        profile_table = Table(profile_rows, colWidths=[(doc.width-38*mm)/2]*2)
+        profile_table.setStyle(TableStyle([('VALIGN',(0,0),(-1,-1),'TOP'),('BOTTOMPADDING',(0,0),(-1,-1),10)]))
+        profile = Table([[artwork(avatar, 29*mm, 29*mm), profile_table]], colWidths=[34*mm, doc.width-34*mm])
+        profile.setStyle(TableStyle([('BACKGROUND',(0,0),(-1,-1),colors.white),('BOX',(0,0),(-1,-1),.5,colors.HexColor('#e3dfd4')),('VALIGN',(0,0),(-1,-1),'MIDDLE'),('TOPPADDING',(0,0),(-1,-1),10),('BOTTOMPADDING',(0,0),(-1,-1),10)]))
+        story.extend([p('Про мене', label), profile, Spacer(1, 6*mm)])
     for page in pages.prefetch_related('blocks'):
         if page.title == 'БОНУС':
-            story.extend([PageBreak(), SectionNumber(page.position + 1), Spacer(1, 10), p('БОНУС', heading),
+            story.extend([PageBreak(), p('БОНУС', heading),
                           p(BONUS['intro'], body), artwork(assets / 'notebook/teacher.png', 110*mm, 65*mm), Spacer(1, 6*mm)])
             cards = []
             for course in BONUS['courses']:
@@ -139,20 +151,10 @@ def build_workbook_pdf(workbook, pages=None):
                 tool_lines.append(p(block.label, body))
             else:
                 tool_lines.append(p(f'{block.label}: {answers.get(block.pk) or chr(8212)}', body))
-        title_card = Table([[[SectionNumber(page.position + 1), Spacer(1, 8), p(page.title, heading)], artwork(assets / 'other' / illustrations[page.position % 12], 34*mm, 34*mm)]], colWidths=[doc.width-40*mm, 40*mm])
+        title_card = Table([[[SectionNumber(page.position + 1), Spacer(1, 8), p(page.title, heading)], artwork(assets / 'other' / illustrations[page.position % 13], 34*mm, 34*mm)]], colWidths=[doc.width-40*mm, 40*mm])
         title_card.setStyle(TableStyle([('VALIGN',(0,0),(-1,-1),'MIDDLE'),('LEFTPADDING',(0,0),(-1,-1),0),('BOTTOMPADDING',(0,0),(-1,-1),12)]))
         story.extend([PageBreak(), title_card, *tool_lines, Spacer(1, 4*mm)])
         profile_fields = [block for block in page_blocks if block.half_width]
-        if profile_fields:
-            profile_cells = [[p(block.label, label), p(answers.get(block.pk, ''), body)] for block in profile_fields]
-            profile_rows = [profile_cells[index:index+2] for index in range(0, len(profile_cells), 2)]
-            if len(profile_rows[-1]) == 1:
-                profile_rows[-1].append('')
-            profile_table = Table(profile_rows, colWidths=[(doc.width-38*mm)/2]*2)
-            profile_table.setStyle(TableStyle([('VALIGN',(0,0),(-1,-1),'TOP'),('BOTTOMPADDING',(0,0),(-1,-1),10)]))
-            profile = Table([[artwork(avatar, 29*mm, 29*mm), profile_table]], colWidths=[34*mm, doc.width-34*mm])
-            profile.setStyle(TableStyle([('BACKGROUND',(0,0),(-1,-1),colors.white),('BOX',(0,0),(-1,-1),.5,colors.HexColor('#e3dfd4')),('VALIGN',(0,0),(-1,-1),'MIDDLE'),('TOPPADDING',(0,0),(-1,-1),10),('BOTTOMPADDING',(0,0),(-1,-1),10)]))
-            story.extend([p('Про мене', label), profile, Spacer(1, 6*mm)])
         for block in page_blocks:
             if block in tool_blocks:
                 continue

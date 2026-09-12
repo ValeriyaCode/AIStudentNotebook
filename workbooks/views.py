@@ -45,8 +45,40 @@ def dashboard(request):
     allowed = set(accessible_pages(request.user, workbook).values_list('pk', flat=True)) if workbook else set()
     for page in pages:
         page.is_open = page.pk in allowed
+    profile_blocks = list(WorkbookBlock.objects.filter(page__template=workbook.template, half_width=True)) if workbook else []
+    existing = {a.block_id: a.value for a in workbook.answers.filter(block__in=profile_blocks)} if workbook else {}
+    read_only = bool(request.user.study_group_id and request.user.study_group.is_archived)
+    form = WorkbookPageForm(profile_blocks, request.POST if request.method == 'POST' else None)
+    if request.method == 'POST' and workbook:
+        if read_only:
+            raise PermissionDenied('Архівна група: зошит доступний лише для перегляду.')
+        valid = form.is_valid()
+        avatar = None
+        if 'avatar' in request.FILES:
+            from accounts.avatar import prepare_avatar
+            from django.core.exceptions import ValidationError
+            try:
+                avatar = prepare_avatar(request.FILES['avatar'])
+            except ValidationError as error:
+                form.add_error(None, error.messages[0])
+                valid = False
+        if valid:
+            with transaction.atomic():
+                for block in profile_blocks:
+                    StudentAnswer.objects.update_or_create(workbook=workbook, block=block, defaults={'value': form.cleaned_data[f'block_{block.pk}']})
+                if avatar:
+                    request.user.avatar = avatar
+                    request.user.save(update_fields=['avatar'])
+                StudentWorkbook.objects.filter(pk=workbook.pk).update(updated_at=timezone.now())
+            messages.success(request, 'Дані про мене збережено.')
+            return redirect('dashboard')
+        existing = {block.pk: extract_answer_value(block, request.POST) for block in profile_blocks}
+    for block in profile_blocks:
+        block.current_value = existing.get(block.pk, '')
+    bonus_page = next((page for page in pages if page.title == 'БОНУС'), None)
+    pages = [page for page in pages if page.title != 'БОНУС']
     available_progress = workbook.completion(accessible_pages(request.user, workbook)) if workbook else 0
-    return render(request, 'workbooks/dashboard.html', {'workbook': workbook, 'pages': pages, 'available_progress': available_progress})
+    return render(request, 'workbooks/dashboard.html', {'workbook': workbook, 'pages': pages, 'available_progress': available_progress, 'profile_blocks': profile_blocks, 'profile_form': form, 'read_only': read_only, 'bonus_page': bonus_page})
 
 
 @login_required
@@ -59,7 +91,7 @@ def page_detail(request, page_id):
     page = get_object_or_404(WorkbookPage, id=page_id, template=workbook.template)
     if not accessible_pages(request.user, workbook).filter(pk=page.pk).exists():
         raise PermissionDenied('Цей розділ ще не відкритий для вашої групи.')
-    blocks = list(page.blocks.all())
+    blocks = list(page.blocks.exclude(half_width=True).exclude(card_style='profile'))
     existing = {a.block_id: a.value for a in workbook.answers.filter(block__page=page)}
 
     read_only = bool(request.user.study_group_id and request.user.study_group.is_archived and not _is_admin(request.user))
@@ -134,7 +166,7 @@ def page_detail(request, page_id):
         'page': page,
         'blocks': blocks, 'page_form': form, 'read_only': read_only,
         'has_fields': any(block.block_type != WorkbookBlock.Type.STATIC_TEXT for block in blocks),
-        'assignment_art': 'images/design/other/' + ['notebook.png', 'books.png', 'lamp.png', 'headphone.png', 'pens.png', 'laptop.png', 'keyboard.png', 'cup.png', 'mouse.png', 'robot.png', 'cup_victory.png', 'present.png'][page.position % 12],
+        'assignment_art': 'images/design/other/' + ['notebook.png', 'books.png', 'books.png', 'lamp.png', 'headphone.png', 'pens.png', 'laptop.png', 'keyboard.png', 'cup.png', 'mouse.png', 'robot.png', 'cup_victory.png', 'present.png'][page.position % 13],
         'prev_page': prev_page,
         'next_page': next_page,
     })

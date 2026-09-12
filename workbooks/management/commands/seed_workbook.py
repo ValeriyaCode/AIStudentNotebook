@@ -6,13 +6,13 @@ from workbooks.models import WorkbookBlock, WorkbookPage, WorkbookTemplate
 
 
 class Command(BaseCommand):
-    help = 'Створює та активує AI-зошит із 12 розділів, зберігаючи попередні тетради.'
+    help = 'Створює та активує AI-зошит із 12 розділів та бонусу, зберігаючи попередні тетради.'
 
     @transaction.atomic
     def handle(self, *args, **options):
         template, _ = WorkbookTemplate.objects.get_or_create(
             title='МІЙ AI-ЗОШИТ',
-            defaults={'description': '11 кроків до самостійного навчання з AI. Твої інструменти, методи, експерименти та відкриття.', 'is_active': False},
+            defaults={'description': '12 кроків до самостійного навчання з AI. Твої інструменти, методи, експерименти та відкриття.', 'is_active': False},
         )
         if not template.pages.exists():
             for p_idx, (title, subtitle, blocks) in enumerate(PAGES):

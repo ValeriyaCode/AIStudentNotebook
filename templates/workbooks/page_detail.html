@@ -7,7 +7,7 @@
 
 <a class="back" href="{% url 'dashboard' %}">← До змісту</a>
 <section class="page-heading">
-    <div class="eyebrow">Сторінка {{ page.position|add:1 }}</div>
+    {% if not bonus %}<div class="eyebrow">Сторінка {{ page.position|add:1 }}</div>{% endif %}
     <h1>{{ page.title }}</h1>
     {% if not bonus %}<p>{{ page.subtitle }}</p>{% endif %}
 </section>
